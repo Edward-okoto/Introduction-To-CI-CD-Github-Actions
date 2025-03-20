@@ -267,13 +267,242 @@ steps:
 
 Each component works together to automate the testing and validation of your Node.js application. 
 
+**AFTER PUSHING TO GITHUB- Go to your GITHUB ACTION and notice that RPM TEST FAILS- CONTINUE ON TO FIX THIS-**
+
+![](./g8.png)
+
+
+![](./g9.png)
+
+
 4.**Testing and Deployment**
 
- - Add automated test for your application
- - Create a workflow for deployment to AWS
+ Add automated test for your application
+
+---
+
+**Add a Test Script to `package.json`**
+1. Open your `package.json` file.
+2. Locate the `scripts` section as indicated above on picture of test error above.
+3. Add or update the `test` script to specify your testing framework or command. For example:
+   ```json
+   "scripts": {
+     "test": "jest"
+   }
+   ```
+   - If you're using Jest, make sure it's installed: 
+     ```bash
+     npm install --save-dev jest
+     ```
+
+4. If you haven’t written any tests yet, create a basic example to ensure the workflow runs.
+
+---
+
+5. Create a Simple Test File**
+1. Create a directory for tests (if it doesn’t already exist):
+   ```bash
+   mkdir tests
+   ```
+2. Create a test file, such as `tests/server.test.js`:
+   ```javascript
+   test('Sample Test', () => {
+     expect(1 + 1).toBe(2);
+   });
+   ```
+3. Save the file and commit the changes.
+
+---
+
+- Run Tests Locally**
+
+  Test the setup locally to ensure everything is working:
+   
+      npm test
+
+  This should now run your test script without errors.
 
 
-5.**Experiment and Learn**
+  ![](./g10.png)
 
-- Modify workflow to see how changes affect the CI/CD process
-- Try adding different types of test (Unit test,integration test)
+- Update Your GitHub Actions Workflow**
+
+  Push the updated files (`package.json` and your test files) to your GitHub repository. This will trigger the CI workflow, and it should now pass.
+
+  ![](./g11.png)
+
+
+
+### Create a Workflow for Deployment to AWS
+1. **Create a Workflow File**:
+   - Navigate to `.github/workflows/` in your repository.
+   - Create a new workflow file:
+     ```bash
+     touch .github/workflows/deploy-to-aws.yml
+     ```
+
+2. **Define the Deployment Workflow**:
+   - Add the following YAML configuration, depending on whether you're deploying to AWS S3 or Elastic Beanstalk.
+
+#### **Deploying to AWS S3**
+To deploy static web pages (e.g., build artifacts) to an S3 bucket:
+```yaml
+name: Deploy to AWS S3
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v2
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    - name: Sync with S3
+      run: |
+        aws s3 sync ./build s3://your-s3-bucket-name --delete
+```
+
+#### **Deploying to AWS Elastic Beanstalk**
+For a backend or full-stack application:
+```yaml
+name: Deploy to AWS Elastic Beanstalk
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v2
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    - name: Install Elastic Beanstalk CLI
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3 python3-pip
+        pip3 install awsebcli --upgrade
+
+    - name: Deploy to Elastic Beanstalk
+      run: eb deploy
+```
+
+---
+
+### **Step 2: Configure AWS Credentials**
+1. **Generate AWS Access Keys**:
+   - In the AWS Management Console, navigate to **IAM** > **Users**.
+   - Select a user (or create a new one) and generate access keys.
+   - Ensure the user has permissions for S3 or Elastic Beanstalk deployment.
+
+2. **Add Secrets to GitHub**:
+   - Go to **Settings** > **Secrets and variables** > **Actions** in your GitHub repository.
+   - Add the following secrets:
+     - `AWS_ACCESS_KEY_ID`
+     - `AWS_SECRET_ACCESS_KEY`
+
+---
+
+### **Step 3: Deploy Locally for Testing**
+1. Test the deployment locally by running the necessary AWS CLI commands:
+   - S3 Deployment:
+     ```bash
+     aws s3 sync ./build s3://your-s3-bucket-name --delete
+     ```
+   - Elastic Beanstalk Deployment:
+     ```bash
+     eb init
+     eb deploy
+     ```
+
+2. Ensure it works locally before pushing changes to GitHub.
+
+---
+
+### **Step 4: Push Workflow to GitHub**
+- Commit and push the deployment workflow:
+  ```bash
+  git add .github/workflows/deploy-to-aws.yml
+  git commit -m "Add AWS deployment workflow"
+  git push origin main
+  ```
+
+---
+
+### **Step 5: Experiment and Learn**
+Here are ways to experiment and learn:
+
+#### **Modify Workflow to See CI/CD Impacts**
+- **Add Deployment Conditions**:
+  Deploy only when a release is published:
+  ```yaml
+  on:
+    release:
+      types: [published]
+  ```
+
+- **Add Caching for Deployment Tools**:
+  Cache dependencies like `pip` packages to speed up deployments:
+  ```yaml
+  - name: Cache pip
+    uses: actions/cache@v3
+    with:
+      path: ~/.cache/pip
+      key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+  ```
+
+#### **Add Different Types of Tests**
+- **Unit Tests**:
+  Write and run tests for small, individual functions in isolation.
+  - Example:
+    ```javascript
+    test('Addition Function', () => {
+      const sum = (a, b) => a + b;
+      expect(sum(1, 2)).toBe(3);
+    });
+    ```
+
+- **Integration Tests**:
+  Test how different parts of your app work together. For example, testing API endpoints:
+  ```javascript
+  const request = require('supertest');
+  const app = require('../server');
+
+  test('GET /', async () => {
+    const response = await request(app).get('/');
+    expect(response.statusCode).toBe(200);
+    expect(response.text).toBe('Hello World!');
+  });
+  ```
+
+#### **Experiment with Failure Scenarios**
+- Introduce intentional errors to test how your pipeline handles failures.
+- For example:
+  - Break a test case.
+  - Create a workflow syntax error.
+  - Omit required secrets in GitHub Actions.
+
+---
+
