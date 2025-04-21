@@ -1,0 +1,33 @@
+{
+  "name": "introduction-to-ci-cd-github-actions",
+  "version": "1.0.0",
+  "description": "GitHub Actions is a powerful tool for automating tasks within your repositories. It's widely used for implementing Continuous Integration and Continuous Deployment (CI/CD) pipelines, which streamline the development process by automating code testing, building, and deployment.",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "lint": "eslint"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Edward-okoto/Introduction-To-CI-CD-Github-Actions.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Edward-okoto/Introduction-To-CI-CD-Github-Actions/issues"
+  },
+  "homepage": "https://github.com/Edward-okoto/Introduction-To-CI-CD-Github-Actions#readme",
+  "dependencies": {
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.25.1",
+    "eslint": "^9.25.1",
+    "eslint-plugin-react": "^7.37.5",
+    "globals": "^16.0.0",
+    "jest": "^29.7.0",
+    "supertest": "^7.1.0"
+  }
+}
